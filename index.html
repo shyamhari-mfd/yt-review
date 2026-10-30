@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Findings review</title>
+<style>
+:root { --bg:#f6f5f2; --panel:#fff; --ink:#1c1b19; --muted:#6b6862; --line:#e4e1da; --soft:#efede8;
+  --accept:#1f7a4d; --reject:#b3382c; --warn:#8a5a00; --warnbg:#fbf3e2; --research:#3d5a99; --editing:#7a4d99; --packaging:#99643d; }
+@media (prefers-color-scheme: dark) { :root { --bg:#161514; --panel:#1f1e1c; --ink:#ecebe7; --muted:#9c988f; --line:#33312d; --soft:#282724;
+  --accept:#4fbf87; --reject:#e0695c; --warn:#e0b45c; --warnbg:#2a2418; --research:#8fa8e0; --editing:#c49be0; --packaging:#e0a87a; } }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans Telugu",Roboto,sans-serif; -webkit-text-size-adjust:100%; }
+.bar { position:sticky; top:0; z-index:5; background:var(--panel); border-bottom:1px solid var(--line); padding:10px 16px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.bar select { flex:1 1 220px; min-width:0; font:inherit; padding:7px 8px; border:1px solid var(--line); border-radius:8px; background:var(--panel); color:var(--ink); }
+.prog { font-size:13px; color:var(--muted); white-space:nowrap; }
+.prog b { color:var(--ink); }
+main { max-width:760px; margin:0 auto; padding:14px 16px 80px; }
+.panel { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:12px; }
+.hero { display:flex; gap:14px; flex-wrap:wrap; }
+.hero img { width:180px; max-width:100%; border-radius:8px; border:1px solid var(--line); }
+.hero h1 { font-size:18px; line-height:1.35; margin:0 0 8px; }
+.chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+.chip { font-size:12.5px; background:var(--soft); border-radius:99px; padding:2px 9px; color:var(--muted); }
+.verdict p { margin:4px 0; font-weight:500; }
+.flags { background:var(--warnbg); color:var(--warn); border-radius:10px; padding:10px 14px; font-size:13.5px; margin-bottom:12px; }
+.flags ul { margin:4px 0 0; padding-left:18px; }
+h2 { font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:18px 0 8px; }
+svg { width:100%; height:auto; display:block; }
+.filters { display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 12px; }
+.filters button { font:inherit; font-size:13.5px; padding:6px 12px; border-radius:99px; border:1px solid var(--line); background:var(--panel); color:var(--ink); }
+.filters button[aria-pressed="true"] { background:var(--ink); color:var(--panel); border-color:var(--ink); }
+.card { border-left:4px solid var(--line); }
+.card.accept { border-left-color:var(--accept); }
+.card.reject { border-left-color:var(--reject); }
+.head { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:6px; font-size:12px; }
+.id { font-family:ui-monospace,Menlo,monospace; color:var(--muted); }
+.team { padding:1px 8px; border-radius:6px; color:#fff; font-weight:600; }
+.team.research { background:var(--research); } .team.editing { background:var(--editing); } .team.packaging { background:var(--packaging); }
+.tag { padding:1px 8px; border-radius:6px; border:1px solid var(--line); color:var(--muted); }
+.statement { margin:4px 0 8px; font-size:15.5px; }
+.next { background:var(--soft); border-radius:8px; padding:8px 12px; font-size:14px; margin-bottom:8px; }
+details { font-size:13.5px; color:var(--muted); margin-bottom:8px; }
+details ul { padding-left:18px; margin:6px 0; }
+.audit { font-size:13px; color:var(--warn); margin-bottom:8px; }
+.btns { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
+.btn { font:inherit; font-weight:600; padding:11px; border-radius:10px; border:1px solid var(--line); background:var(--panel); color:var(--ink); }
+.btn.acc[aria-pressed="true"] { background:var(--accept); border-color:var(--accept); color:#fff; }
+.btn.rej[aria-pressed="true"] { background:var(--reject); border-color:var(--reject); color:#fff; }
+textarea { width:100%; min-height:64px; font:inherit; font-size:14.5px; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--panel); color:var(--ink); resize:vertical; }
+.saved { font-size:12px; color:var(--muted); min-height:16px; }
+.done { background:var(--accept); color:#fff; border-radius:10px; padding:12px 16px; margin-bottom:12px; font-weight:500; }
+.empty { text-align:center; color:var(--muted); padding:40px 10px; }
+</style>
+</head>
+<body>
+<div class="bar"><select id="run" aria-label="Choose a video"></select><div class="prog" id="prog"></div></div>
+<main id="app"></main>
+<script>
+// The link carries #g=<gateway deployment>&k=<review key>&run=<video/cp>. Everything after '#' stays in the
+// browser: GitHub never sees the key. The key is remembered on this device so a bookmark keeps working.
+const WEB = "https://";
+const P = new URLSearchParams(location.hash.slice(1));
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+                set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+if (P.get("g")) store.set("yt_g", P.get("g"));
+if (P.get("k")) store.set("yt_k", P.get("k"));
+const G = store.get("yt_g"), K = store.get("yt_k");
+const API = G && `${WEB}script.google.com/macros/s/${G}/exec`;
+let DATA = { runs: [], selected: P.get("run") || "" };
+
+async function api(body) {
+  // text/plain keeps it a simple request (no CORS preflight); Apps Script answers through a redirect.
+  const res = body
+    ? await fetch(API, { method: "POST", body: JSON.stringify(body), headers: { "Content-Type": "text/plain;charset=utf-8" } })
+    : await fetch(`${API}?k=${encodeURIComponent(K)}`);
+  const json = await res.json();
+  if (!json.ok) throw new Error(json.error || "request failed");
+  return json;
+}
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+const fmt = v => { const n = Number(v); return v === "" || v == null || !isFinite(n) ? "–" : Math.abs(n) >= 1000 ? Math.round(n).toLocaleString("en-IN") : String(+n.toFixed(2)); };
+const mmss = s => { s = Math.round(s || 0); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
+let cur = null, team = "all", onlyOpen = false;
+
+function decisions(run) { return run.remote || {}; }
+function counts(run) {
+  const ids = ((run.data.diagnosis || {}).findings || []).map(f => f.id), d = decisions(run);
+  const decided = ids.filter(id => (d[id] || {}).decision).length;
+  return { decided, total: ids.length };
+}
+
+async function init() {
+  if (!API || !K) { $("#app").innerHTML = `<div class="empty">Open this page from the review link in the email.</div>`; return; }
+  $("#app").innerHTML = `<div class="empty">Loading…</div>`;
+  try { DATA.runs = (await api()).runs; }
+  catch (e) { $("#app").innerHTML = `<div class="empty">Couldn't load the runs (${esc(e.message)}). Try the link from the latest email.</div>`; return; }
+  if (!DATA.runs.length) { $("#app").innerHTML = `<div class="empty">Nothing waiting for review.</div>`; return; }
+  const sel = $("#run");
+  window.label = r => { const c = counts(r); return `${c.decided}/${c.total} · ${r.data.checkpoint} · ${r.data.title}`; };
+  sel.innerHTML = DATA.runs.map((r, i) => `<option value="${i}">${esc(label(r))}</option>`).join("");
+  const pick = Math.max(0, DATA.runs.findIndex(r => r.key === DATA.selected));
+  sel.value = pick;
+  sel.onchange = () => { cur = DATA.runs[sel.value]; render(); window.scrollTo(0, 0); };
+  cur = DATA.runs[pick];
+  render();
+}
+
+function chart(r) {
+  const c = r.curve || [], m = r.median || [];
+  if (c.length !== 100) return "";
+  const W = 700, H = 180, L = 30, B = 20, T = 8, max = Math.max(100, ...c.filter(isFinite));
+  const x = i => L + (i / 99) * (W - L - 6), y = v => T + (1 - v / max) * (H - T - B);
+  const path = a => a.map((v, i) => v == null ? "" : `${i && a[i - 1] != null ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
+  const ticks = (r.beats || []).map(b => `<line x1="${x(b.start / (r.duration || 1) * 99)}" x2="${x(b.start / (r.duration || 1) * 99)}" y1="${T}" y2="${H - B}" stroke="var(--line)"/>`).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Retention curve">${ticks}
+    ${[0, 50, 100].map(v => `<text x="2" y="${y(v) + 4}" font-size="11" fill="var(--muted)">${v}%</text>`).join("")}
+    <text x="${L}" y="${H - 4}" font-size="11" fill="var(--muted)">0:00</text><text x="${W - 40}" y="${H - 4}" font-size="11" fill="var(--muted)">${mmss(r.duration)}</text>
+    ${m.length ? `<path d="${path(m)}" fill="none" stroke="var(--muted)" stroke-dasharray="4 4" stroke-width="1.5"/>` : ""}
+    <path d="${path(c)}" fill="none" stroke="var(--ink)" stroke-width="2.2"/></svg>
+    <div class="saved">Solid: this video. Dashed: our usual video. Lines: sections of the video.</div>`;
+}
+
+function render() {
+  const r = cur.data, d = r.diagnosis || {}, h = r.headline || {}, dec = decisions(cur);
+  const c = counts(cur);
+  updateProg();
+  const list = (d.findings || []).filter(f => (team === "all" || (f.teams || []).includes(team)) && (!onlyOpen || !(dec[f.id] || {}).decision));
+  const issues = {};
+  for (const i of (r.audit || {}).items || []) (issues[i.finding] ||= []).push(i);
+  $("#app").innerHTML = `
+    ${c.decided === c.total && c.total ? `<div class="done">All ${c.total} decided. The emails go out at the next scheduled run (11:00 or 21:00).</div>` : ""}
+    <section class="panel hero">
+      <a href="${WEB}www.youtube.com/watch?v=${esc(r.video_id)}" target="_blank" rel="noopener"><img src="${WEB}i.ytimg.com/vi/${esc(r.video_id)}/mqdefault.jpg" alt="Thumbnail"></a>
+      <div style="flex:1 1 260px">
+        <div class="chips"><span class="chip">${esc(r.checkpoint)}</span><span class="chip">${fmt(h.views)} views</span>
+          <span class="chip">${fmt(h.impressions)} impressions</span><span class="chip">${fmt(h.ctr)}% CTR</span><span class="chip">${fmt(h.apv_pct)}% viewed</span></div>
+        <h1>${esc(r.title)}</h1>
+        <div class="verdict">${(d.verdict || []).map(v => `<p>${esc(v)}</p>`).join("")}</div>
+        ${d.bottleneck ? `<p style="margin:8px 0 0;font-size:14px"><b>Held back at: ${esc(d.bottleneck.stage)}.</b> ${esc(d.bottleneck.why || "")}</p>` : ""}
+      </div>
+    </section>
+    ${(r.flags || []).length ? `<div class="flags"><b>Data warnings</b><ul>${r.flags.map(f => `<li>${esc(f)}</li>`).join("")}</ul></div>` : ""}
+    <section class="panel"><h2 style="margin-top:0">Who was still watching</h2>${chart(r)}</section>
+    <h2>Findings</h2>
+    <div class="filters">
+      ${["all", "research", "editing", "packaging"].map(t => `<button data-team="${t}" aria-pressed="${team === t}">${t === "all" ? "All teams" : t}</button>`).join("")}
+      <button id="open" aria-pressed="${onlyOpen}">Only undecided</button>
+    </div>
+    ${list.length ? list.map(f => card(f, dec[f.id] || {}, issues[f.id] || [])).join("") : `<div class="empty">Nothing matches.</div>`}`;
+  document.querySelectorAll("[data-team]").forEach(b => b.onclick = () => { team = b.dataset.team; render(); });
+  $("#open").onclick = () => { onlyOpen = !onlyOpen; render(); };
+  document.querySelectorAll(".card").forEach(bind);
+}
+
+function card(f, dec, issues) {
+  return `<article class="panel card ${esc(dec.decision || "")}" data-id="${esc(f.id)}">
+    <div class="head"><span class="id">${esc(f.id)}</span>
+      ${(f.teams || []).map(t => `<span class="team ${esc(t)}">${esc(t)}</span>`).join("")}
+      ${f.kind ? `<span class="tag">${esc(f.kind)}</span>` : ""}${f.craft_tip ? `<span class="tag">craft tip</span>` : ""}
+      <span class="tag">${esc(f.confidence)} confidence</span>${f.lesson_candidate ? `<span class="tag">★ lesson candidate</span>` : ""}</div>
+    <p class="statement">${esc(f.statement)}</p>
+    ${f.do_next ? `<div class="next"><b>Do next:</b> ${esc(f.do_next)}</div>` : ""}
+    <details><summary>Numbers and sources (${(f.numbers || []).length})</summary><ul>${(f.numbers || []).map(n => `<li>${esc(n)}</li>`).join("")}</ul></details>
+    ${issues.map(i => `<div class="audit"><b>Auditor (${esc(i.severity)}):</b> ${esc(i.fix || i.number)}</div>`).join("")}
+    <div class="btns"><button class="btn acc" data-act="accept" aria-pressed="${dec.decision === "accept"}">✓ Accept</button>
+      <button class="btn rej" data-act="reject" aria-pressed="${dec.decision === "reject"}">✕ Reject</button></div>
+    <textarea placeholder="Note (optional): why, or what to change">${esc(dec.note || "")}</textarea>
+    <div class="saved"></div></article>`;
+}
+
+async function save(id, decision, note, el) {
+  el.querySelector(".saved").textContent = "Saving…";
+  try {
+    const r = await api({ action: "save_decision", review_key: K, key: cur.key, id, decision, note });
+    cur.remote = r.decisions;
+    if (decision !== null) render(); else { updateProg(); el.querySelector(".saved").textContent = "Saved"; }
+  } catch (e) {
+    el.querySelector(".saved").textContent = "Not saved: " + e.message + ". Check your connection and tap again.";
+  }
+}
+function updateProg() {
+  const c = counts(cur);
+  $("#prog").innerHTML = `<b>${c.decided}</b> of ${c.total} decided`;
+  const opt = $("#run").selectedOptions[0];
+  if (opt) opt.textContent = label(cur);
+}
+
+function bind(el) {
+  const id = el.dataset.id, ta = el.querySelector("textarea");
+  el.querySelectorAll("[data-act]").forEach(b => b.onclick = () => {
+    const now = (decisions(cur)[id] || {}).decision;
+    save(id, now === b.dataset.act ? "" : b.dataset.act, ta.value, el);
+  });
+  let t;
+  ta.oninput = () => { clearTimeout(t); t = setTimeout(() => save(id, null, ta.value, el), 900); };
+}
+init();
+</script>
+</body>
+</html>
