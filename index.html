@@ -3,199 +3,553 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Findings review</title>
+<title>Findings Review</title>
 <style>
-:root { --bg:#f6f5f2; --panel:#fff; --ink:#1c1b19; --muted:#6b6862; --line:#e4e1da; --soft:#efede8;
-  --accept:#1f7a4d; --reject:#b3382c; --warn:#8a5a00; --warnbg:#fbf3e2; --research:#3d5a99; --editing:#7a4d99; --packaging:#99643d; }
-@media (prefers-color-scheme: dark) { :root { --bg:#161514; --panel:#1f1e1c; --ink:#ecebe7; --muted:#9c988f; --line:#33312d; --soft:#282724;
-  --accept:#4fbf87; --reject:#e0695c; --warn:#e0b45c; --warnbg:#2a2418; --research:#8fa8e0; --editing:#c49be0; --packaging:#e0a87a; } }
+:root {
+  --bg: #f6f5f2; --panel: #ffffff; --ink: #1c1b19; --muted: #6b6862; --line: #e4e1da; --soft: #efede8;
+  --accept: #1f7a4d; --accept-bg: #e6f3ec; --reject: #b3362f; --reject-bg: #f9e8e6;
+  --warn: #8a5a00; --warn-bg: #fdf3dc;
+  --research: #4b4fc4; --editing: #0f7c7a; --packaging: #b0611a;
+  --strong: #1f7a4d; --ok: #6b6862; --weak: #b3362f; --unknown: #a8a49c;
+  --curve: #1c1b19; --median: #a8a49c;
+  --radius: 10px; --shadow: 0 1px 2px rgba(0,0,0,.04), 0 2px 8px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161514; --panel: #1f1e1c; --ink: #ecebe7; --muted: #9c988f; --line: #33312d; --soft: #282724;
+    --accept: #4fbf87; --accept-bg: #1b3328; --reject: #e8776e; --reject-bg: #3a2220;
+    --warn: #e6b450; --warn-bg: #352a14;
+    --research: #8f93f5; --editing: #45c2bf; --packaging: #e39a55;
+    --strong: #4fbf87; --ok: #9c988f; --weak: #e8776e; --unknown: #5c5952;
+    --curve: #ecebe7; --median: #6b6862;
+    --shadow: none;
+  }
+}
 * { box-sizing: border-box; }
-body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans Telugu",Roboto,sans-serif; -webkit-text-size-adjust:100%; }
-.bar { position:sticky; top:0; z-index:5; background:var(--panel); border-bottom:1px solid var(--line); padding:10px 16px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-.bar select { flex:1 1 220px; min-width:0; font:inherit; padding:7px 8px; border:1px solid var(--line); border-radius:8px; background:var(--panel); color:var(--ink); }
-.prog { font-size:13px; color:var(--muted); white-space:nowrap; }
-.prog b { color:var(--ink); }
-main { max-width:760px; margin:0 auto; padding:14px 16px 80px; }
-.panel { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:12px; }
-.hero { display:flex; gap:14px; flex-wrap:wrap; }
-.hero img { width:180px; max-width:100%; border-radius:8px; border:1px solid var(--line); }
-.hero h1 { font-size:18px; line-height:1.35; margin:0 0 8px; }
-.chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
-.chip { font-size:12.5px; background:var(--soft); border-radius:99px; padding:2px 9px; color:var(--muted); }
-.verdict p { margin:4px 0; font-weight:500; }
-.flags { background:var(--warnbg); color:var(--warn); border-radius:10px; padding:10px 14px; font-size:13.5px; margin-bottom:12px; }
-.flags ul { margin:4px 0 0; padding-left:18px; }
-h2 { font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:18px 0 8px; }
-svg { width:100%; height:auto; display:block; }
-.filters { display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 12px; }
-.filters button { font:inherit; font-size:13.5px; padding:6px 12px; border-radius:99px; border:1px solid var(--line); background:var(--panel); color:var(--ink); }
-.filters button[aria-pressed="true"] { background:var(--ink); color:var(--panel); border-color:var(--ink); }
-.card { border-left:4px solid var(--line); }
-.card.accept { border-left-color:var(--accept); }
-.card.reject { border-left-color:var(--reject); }
-.head { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:6px; font-size:12px; }
-.id { font-family:ui-monospace,Menlo,monospace; color:var(--muted); }
-.team { padding:1px 8px; border-radius:6px; color:#fff; font-weight:600; }
-.team.research { background:var(--research); } .team.editing { background:var(--editing); } .team.packaging { background:var(--packaging); }
-.tag { padding:1px 8px; border-radius:6px; border:1px solid var(--line); color:var(--muted); }
-.statement { margin:4px 0 8px; font-size:15.5px; }
-.next { background:var(--soft); border-radius:8px; padding:8px 12px; font-size:14px; margin-bottom:8px; }
-details { font-size:13.5px; color:var(--muted); margin-bottom:8px; }
-details ul { padding-left:18px; margin:6px 0; }
-.audit { font-size:13px; color:var(--warn); margin-bottom:8px; }
-.btns { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
-.btn { font:inherit; font-weight:600; padding:11px; border-radius:10px; border:1px solid var(--line); background:var(--panel); color:var(--ink); }
-.btn.acc[aria-pressed="true"] { background:var(--accept); border-color:var(--accept); color:#fff; }
-.btn.rej[aria-pressed="true"] { background:var(--reject); border-color:var(--reject); color:#fff; }
-textarea { width:100%; min-height:64px; font:inherit; font-size:14.5px; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--panel); color:var(--ink); resize:vertical; }
-.saved { font-size:12px; color:var(--muted); min-height:16px; }
-.done { background:var(--accept); color:#fff; border-radius:10px; padding:12px 16px; margin-bottom:12px; font-weight:500; }
-.empty { text-align:center; color:var(--muted); padding:40px 10px; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans Telugu", system-ui, sans-serif; }
+button, select, textarea { font: inherit; color: inherit; }
+.mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; }
+.muted { color: var(--muted); }
+
+/* top bar */
+.bar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 14px; padding: 10px 24px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.brand { font-weight: 650; letter-spacing: -.01em; white-space: nowrap; }
+.bar select { max-width: 420px; min-width: 0; width: 100%; text-overflow: ellipsis; flex: 1; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+.progress { margin-left: auto; display: flex; align-items: center; gap: 10px; white-space: nowrap; font-size: 13.5px; }
+.pbar { width: 120px; height: 6px; border-radius: 3px; background: var(--soft); overflow: hidden; display: flex; }
+.pbar i { display: block; height: 100%; }
+
+main { max-width: 1080px; margin: 0 auto; padding: 24px 24px 80px; }
+section { margin-bottom: 28px; }
+h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; margin: 0 0 10px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+
+/* hero */
+.hero { display: grid; grid-template-columns: 280px 1fr; gap: 24px; align-items: start; }
+.hero img { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: var(--radius); border: 1px solid var(--line); background: var(--soft); }
+.hero h1 { font-size: 22px; line-height: 1.3; margin: 6px 0 12px; letter-spacing: -.01em; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 999px; font-size: 12.5px;
+  background: var(--soft); color: var(--muted); white-space: nowrap; }
+.verdict { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.verdict li { padding-left: 16px; position: relative; }
+.verdict li::before { content: ""; position: absolute; left: 0; top: .62em; width: 6px; height: 6px; border-radius: 50%; background: var(--ink); }
+.callout { margin-top: 14px; padding: 12px 14px; border-radius: 8px; background: var(--soft); }
+.callout b { font-weight: 650; }
+
+/* funnel */
+.funnel { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.stage { padding: 10px 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; text-align: left; }
+.stage .name { font-size: 12.5px; color: var(--muted); }
+.stage .rating { font-weight: 650; text-transform: capitalize; }
+.stage.strong .rating { color: var(--strong); } .stage.weak .rating { color: var(--weak); }
+.stage.ok .rating { color: var(--ok); } .stage.unknown .rating { color: var(--unknown); }
+.stage.bottleneck { outline: 2px solid var(--weak); outline-offset: -1px; }
+.stage[aria-pressed="true"] { background: var(--soft); }
+.stage-detail { margin-top: 8px; padding: 12px 14px; font-size: 14px; }
+
+/* health row */
+.health { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.health .panel { padding: 14px 16px; }
+.health ul { margin: 6px 0 0; padding-left: 18px; font-size: 13.5px; }
+.badge { display: inline-block; padding: 1px 8px; border-radius: 6px; font-weight: 650; font-size: 13px; }
+.badge.pass { background: var(--accept-bg); color: var(--accept); } .badge.fail { background: var(--reject-bg); color: var(--reject); }
+
+/* chart */
+.chart { padding: 14px 16px 8px; position: relative; }
+.chart svg { width: 100%; height: auto; display: block; }
+.legend { display: flex; gap: 16px; font-size: 12.5px; color: var(--muted); margin-bottom: 4px; }
+.legend i { display: inline-block; width: 18px; height: 0; border-top: 2px solid var(--curve); vertical-align: middle; margin-right: 6px; }
+.legend i.med { border-top: 2px dashed var(--median); }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); padding: 8px 10px; border-radius: 8px;
+  font-size: 12.5px; max-width: 280px; opacity: 0; transition: opacity .1s; }
+
+.tapinfo { font-size: 13px; min-height: 1.4em; margin-top: 6px; }
+.sections { margin-top: 8px; font-size: 13.5px; }
+.sections summary { cursor: pointer; color: var(--muted); }
+.sections ol { margin: 8px 0 0; padding-left: 22px; }
+.sections li { margin-bottom: 4px; }
+
+/* findings */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); }
+.seg button { border: 0; background: none; padding: 6px 12px; cursor: pointer; font-size: 13.5px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.toggle { display: inline-flex; gap: 6px; align-items: center; font-size: 13.5px; color: var(--muted); cursor: pointer; margin-left: 6px; }
+.cards { display: grid; gap: 12px; }
+.card { padding: 16px 18px; border-left: 4px solid var(--line); }
+.card.accept { border-left-color: var(--accept); } .card.reject { border-left-color: var(--reject); }
+.card.reject .statement, .card.reject .next { opacity: .55; }
+.card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; }
+.team { padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; text-transform: capitalize; }
+.team.research { color: var(--research); background: color-mix(in srgb, var(--research) 12%, transparent); }
+.team.editing { color: var(--editing); background: color-mix(in srgb, var(--editing) 12%, transparent); }
+.team.packaging { color: var(--packaging); background: color-mix(in srgb, var(--packaging) 12%, transparent); }
+.conf { font-size: 12.5px; color: var(--muted); }
+.conf::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; background: var(--unknown); }
+.conf.high::before { background: var(--strong); } .conf.medium::before { background: var(--warn); }
+.kind { font-size: 12px; padding: 1px 8px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); text-transform: capitalize; }
+.lesson { font-size: 12.5px; color: var(--warn); font-weight: 600; }
+.statement { font-size: 16px; margin: 0 0 10px; }
+.next { padding: 10px 12px; background: var(--soft); border-radius: 8px; font-size: 14px; margin-bottom: 10px; }
+.next b { font-weight: 650; }
+details.evidence summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+details.evidence ul { margin: 8px 0 0; padding-left: 18px; font-size: 13px; }
+details.evidence li { margin-bottom: 4px; }
+.auditnote { margin-top: 10px; padding: 8px 12px; background: var(--warn-bg); color: var(--warn); border-radius: 8px; font-size: 13px; }
+.decide { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.btns { display: inline-flex; gap: 6px; }
+.btn { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 7px 14px; cursor: pointer; font-weight: 600; font-size: 14px; }
+.btn:hover { background: var(--soft); }
+#pbBtn[aria-pressed="true"] { background: var(--ink, #1c1b19); color: var(--panel); }
+.pb-team { margin: 22px 0 10px; font-size: 15px; }
+.pb { padding: 14px 16px; margin-bottom: 10px; }
+.pb.retired { opacity: .55; }
+.pb .st { font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 6px; border: 1px solid var(--line); text-transform: capitalize; }
+.pb .st.rule { background: var(--accept); border-color: var(--accept); color: #fff; }
+.pb .st.pattern { border-color: var(--accept); color: var(--accept); }
+.pb ul { margin: 6px 0 0; padding-left: 18px; font-size: 13px; color: var(--muted); }
+.btn.acc[aria-pressed="true"] { background: var(--accept); border-color: var(--accept); color: #fff; }
+.btn.rej[aria-pressed="true"] { background: var(--reject); border-color: var(--reject); color: #fff; }
+.btn:focus-visible, .stage:focus-visible, .seg button:focus-visible { outline: 2px solid var(--research); outline-offset: 2px; }
+textarea { width: 100%; min-height: 38px; resize: vertical; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--bg); font-size: 14px; }
+.saved { font-size: 12px; color: var(--muted); min-height: 1em; margin-top: 4px; }
+
+/* causes */
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+td, th { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 12.5px; }
+.st { font-weight: 600; text-transform: capitalize; white-space: nowrap; }
+.st.supported { color: var(--strong); } .st.ruled_out { color: var(--muted); text-decoration: line-through; }
+.st.partly { color: var(--warn); } .st.cant_tell { color: var(--unknown); }
+details.panel > summary { padding: 12px 16px; cursor: pointer; font-weight: 600; }
+details.panel > div { padding: 0 6px 8px; overflow-x: auto; }
+
+.done { padding: 14px 16px; margin-bottom: 16px; background: var(--accept-bg); color: var(--accept); border-radius: var(--radius); font-weight: 500; }
+.empty { padding: 40px; text-align: center; color: var(--muted); }
+footer { font-size: 12.5px; color: var(--muted); margin-top: 32px; }
+
+@media (max-width: 760px) {
+  .bar { padding: 10px 16px; flex-wrap: wrap; } .bar select { order: 3; max-width: none; flex-basis: 100%; }
+  .legend { flex-wrap: wrap; gap: 4px 14px; }
+  main { padding: 16px 16px 60px; }
+  .hero { grid-template-columns: 1fr; } .health { grid-template-columns: 1fr; }
+  .funnel { grid-template-columns: repeat(4, 1fr); }
+  .decide { grid-template-columns: 1fr; }
+  .btns { display: grid; grid-template-columns: 1fr 1fr; } .btn { padding: 11px; }
+  .brand { display: none; }
+}
+.btn { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 </style>
 </head>
 <body>
-<div class="bar"><select id="run" aria-label="Choose a video"></select><div class="prog" id="prog"></div></div>
-<main id="app"></main>
+<div class="bar">
+  <span class="brand">Findings review</span>
+  <select id="run" aria-label="Choose a video and checkpoint"></select>
+  <button class="btn" id="pbBtn" aria-pressed="false">Playbook</button>
+  <div class="progress" id="progress"></div>
+</div>
+<main id="app"><div class="empty">Loading…</div></main>
+<div class="tip" id="tip"></div>
+
 <script>
-// The link carries #g=<gateway deployment>&k=<review key>&run=<video/cp>. Everything after '#' stays in the
-// browser: GitHub never sees the key. The key is remembered on this device so a bookmark keeps working.
-const WEB = "https://";
-const P = new URLSearchParams(location.hash.slice(1));
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const mmss = s => { s = Math.round(s || 0); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
+const fmtNum = v => { const n = Number(v); return isFinite(n) && v !== "" ? (Math.abs(n) >= 1000 ? Math.round(n).toLocaleString("en-IN") : (+n.toFixed(2)).toString()) : "–"; };
+const TEAMS = ["research", "editing", "packaging"];
+let state = { runs: [], run: null, team: "all", onlyOpen: false, onlyLessons: false, openStage: null };
+
+// The same page runs in two places. On this Mac (`ya review-ui`) it talks to the local server. Published on
+// GitHub Pages it's opened from the email link, #g=<gateway deployment>&k=<review key>&run=<video/cp>, and talks
+// to the gateway Apps Script. The key stays after '#' (never sent to GitHub) and is remembered on the device.
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
                 set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
-if (P.get("g")) store.set("yt_g", P.get("g"));
-if (P.get("k")) store.set("yt_k", P.get("k"));
-const G = store.get("yt_g"), K = store.get("yt_k");
-const API = G && `${WEB}script.google.com/macros/s/${G}/exec`;
-let DATA = { runs: [], selected: P.get("run") || "" };
+const HP = new URLSearchParams(location.hash.slice(1));
+const LOCAL = ["127.0.0.1", "localhost"].includes(location.hostname);
+if (!LOCAL && HP.get("g")) store.set("yt_g", HP.get("g"));
+if (!LOCAL && HP.get("k")) store.set("yt_k", HP.get("k"));
+const GW = !LOCAL && store.get("yt_g") && `https://script.google.com/macros/s/${store.get("yt_g")}/exec`, KEY = store.get("yt_k");
 
-async function api(body) {
-  // text/plain keeps it a simple request (no CORS preflight); Apps Script answers through a redirect.
-  const res = body
-    ? await fetch(API, { method: "POST", body: JSON.stringify(body), headers: { "Content-Type": "text/plain;charset=utf-8" } })
-    : await fetch(`${API}?k=${encodeURIComponent(K)}`);
-  const json = await res.json();
-  if (!json.ok) throw new Error(json.error || "request failed");
-  return json;
+function statusOf(run, decisions) {
+  const ids = ((run.diagnosis || {}).findings || []).map(f => f.id);
+  const pick = d => ids.filter(id => (decisions[id] || {}).decision === d);
+  const undecided = ids.filter(id => !(decisions[id] || {}).decision);
+  return { accepted: pick("accept"), rejected: pick("reject"), undecided, complete: !undecided.length && ids.length > 0 };
 }
-const $ = s => document.querySelector(s);
-const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
-const fmt = v => { const n = Number(v); return v === "" || v == null || !isFinite(n) ? "–" : Math.abs(n) >= 1000 ? Math.round(n).toLocaleString("en-IN") : String(+n.toFixed(2)); };
-const mmss = s => { s = Math.round(s || 0); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
-let cur = null, team = "all", onlyOpen = false;
 
-function decisions(run) { return run.remote || {}; }
-function counts(run) {
-  const ids = ((run.data.diagnosis || {}).findings || []).map(f => f.id), d = decisions(run);
-  const decided = ids.filter(id => (d[id] || {}).decision).length;
-  return { decided, total: ids.length };
-}
+const backend = LOCAL ? {
+  remote: false,
+  runs: async () => (await fetch("/api/runs")).json(),
+  run: async (vid, cp) => (await fetch(`/api/run/${vid}/${cp}`)).json(),
+  thumb: vid => `/thumb/${vid}`,
+  async decide(r, id, body) {
+    const res = await fetch(`/api/decide/${r.video_id}/${r.checkpoint}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, ...body }) });
+    if (!res.ok) throw new Error("Is `ya review-ui` still running?");
+    return res.json();
+  },
+} : {
+  remote: true, cache: null,
+  async all() {
+    if (!GW || !KEY) throw new Error("Open this page from the review link in the email.");
+    if (!this.cache) {
+      // text/plain GET/POST keep these simple requests (no CORS preflight); Apps Script answers through a redirect.
+      const j = await (await fetch(`${GW}?k=${encodeURIComponent(KEY)}`)).json();
+      if (!j.ok) throw new Error(j.error || "couldn't load");
+      this.cache = j.runs;
+    }
+    return this.cache;
+  },
+  async runs() {
+    return (await this.all()).map(x => {
+      const s = statusOf(x.data, x.remote || {});
+      return { video_id: x.data.video_id, checkpoint: x.data.checkpoint, title: x.data.title, undecided: s.undecided.length };
+    });
+  },
+  async run(vid, cp) {
+    const x = (await this.all()).find(x => x.key === `${vid}/${cp}`);
+    return { ...x.data, decisions: x.remote || {}, status: statusOf(x.data, x.remote || {}) };
+  },
+  thumb: vid => `https://i.ytimg.com/vi/${vid}/mqdefault.jpg`,
+  async decide(r, id, body) {
+    const res = await fetch(GW, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "save_decision", review_key: KEY, key: `${r.video_id}/${r.checkpoint}`, id,
+                             decision: body.decision === undefined ? null : body.decision, note: body.note }) });
+    const j = await res.json();
+    if (!j.ok) throw new Error(j.error || "not saved");
+    const x = this.cache.find(x => x.key === `${r.video_id}/${r.checkpoint}`);
+    x.remote = j.decisions;
+    return { decisions: j.decisions, status: statusOf(r, j.decisions) };
+  },
+};
 
 async function init() {
-  if (!API || !K) { $("#app").innerHTML = `<div class="empty">Open this page from the review link in the email.</div>`; return; }
-  $("#app").innerHTML = `<div class="empty">Loading…</div>`;
-  try { DATA.runs = (await api()).runs; }
-  catch (e) { $("#app").innerHTML = `<div class="empty">Couldn't load the runs (${esc(e.message)}). Try the link from the latest email.</div>`; return; }
-  if (!DATA.runs.length) { $("#app").innerHTML = `<div class="empty">Nothing waiting for review.</div>`; return; }
+  if (backend.remote) $("#pbBtn").hidden = true;  // the playbook lives on the Mac
+  $("#pbBtn").onclick = () => state.view === "playbook" ? load($("#run").value) : showPlaybook();
+  if (LOCAL && location.hash === "#playbook") showPlaybook();
+  try { state.runs = await backend.runs(); }
+  catch (e) { $("#app").innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
   const sel = $("#run");
-  window.label = r => { const c = counts(r); return `${c.decided}/${c.total} · ${r.data.checkpoint} · ${r.data.title}`; };
-  sel.innerHTML = DATA.runs.map((r, i) => `<option value="${i}">${esc(label(r))}</option>`).join("");
-  const pick = Math.max(0, DATA.runs.findIndex(r => r.key === DATA.selected));
-  sel.value = pick;
-  sel.onchange = () => { cur = DATA.runs[sel.value]; render(); window.scrollTo(0, 0); };
-  cur = DATA.runs[pick];
-  render();
+  if (!state.runs.length) { $("#app").innerHTML = `<div class="empty">${backend.remote ? "Nothing waiting for review." : `No analysed runs yet. Run <span class="mono">/yt-analytics-master &lt;video&gt; 7d</span> first.`}</div>`; return; }
+  sel.innerHTML = state.runs.map(r => `<option value="${esc(r.video_id)}|${esc(r.checkpoint)}">${esc(r.checkpoint)} · ${esc(r.title)}${r.undecided ? ` · ${r.undecided} to decide` : " · done"}</option>`).join("");
+  const fromHash = backend.remote ? (HP.get("run") || "").replace("/", "|") : decodeURIComponent(location.hash.slice(1));
+  if (fromHash && state.runs.some(r => `${r.video_id}|${r.checkpoint}` === fromHash)) sel.value = fromHash;
+  sel.onchange = () => load(sel.value);
+  if (state.view !== "playbook") load(sel.value);
 }
 
-function chart(r) {
-  const c = r.curve || [], m = r.median || [];
-  if (c.length !== 100) return "";
-  const W = 700, H = 180, L = 30, B = 20, T = 8, max = Math.max(100, ...c.filter(isFinite));
-  const x = i => L + (i / 99) * (W - L - 6), y = v => T + (1 - v / max) * (H - T - B);
-  const path = a => a.map((v, i) => v == null ? "" : `${i && a[i - 1] != null ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
-  const ticks = (r.beats || []).map(b => `<line x1="${x(b.start / (r.duration || 1) * 99)}" x2="${x(b.start / (r.duration || 1) * 99)}" y1="${T}" y2="${H - B}" stroke="var(--line)"/>`).join("");
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Retention curve">${ticks}
-    ${[0, 50, 100].map(v => `<text x="2" y="${y(v) + 4}" font-size="11" fill="var(--muted)">${v}%</text>`).join("")}
-    <text x="${L}" y="${H - 4}" font-size="11" fill="var(--muted)">0:00</text><text x="${W - 40}" y="${H - 4}" font-size="11" fill="var(--muted)">${mmss(r.duration)}</text>
-    ${m.length ? `<path d="${path(m)}" fill="none" stroke="var(--muted)" stroke-dasharray="4 4" stroke-width="1.5"/>` : ""}
-    <path d="${path(c)}" fill="none" stroke="var(--ink)" stroke-width="2.2"/></svg>
-    <div class="saved">Solid: this video. Dashed: our usual video. Lines: sections of the video.</div>`;
+async function load(key) {
+  state.view = "run"; $("#pbBtn").setAttribute("aria-pressed", "false");
+  const [vid, cp] = key.split("|");
+  if (!backend.remote) location.hash = encodeURIComponent(key);
+  state.run = await backend.run(vid, cp);
+  render();
+  window.scrollTo(0, 0);
 }
 
 function render() {
-  const r = cur.data, d = r.diagnosis || {}, h = r.headline || {}, dec = decisions(cur);
-  const c = counts(cur);
-  updateProg();
-  const list = (d.findings || []).filter(f => (team === "all" || (f.teams || []).includes(team)) && (!onlyOpen || !(dec[f.id] || {}).decision));
-  const issues = {};
-  for (const i of (r.audit || {}).items || []) (issues[i.finding] ||= []).push(i);
+  const r = state.run, d = r.diagnosis || {}, a = r.audit;
+  const bottleneck = (d.bottleneck || {}).stage;
+  const h = r.headline || {};
   $("#app").innerHTML = `
-    ${c.decided === c.total && c.total ? `<div class="done">All ${c.total} decided. The emails go out at the next scheduled run (11:00 or 21:00).</div>` : ""}
-    <section class="panel hero">
-      <a href="${WEB}www.youtube.com/watch?v=${esc(r.video_id)}" target="_blank" rel="noopener"><img src="${WEB}i.ytimg.com/vi/${esc(r.video_id)}/mqdefault.jpg" alt="Thumbnail"></a>
-      <div style="flex:1 1 260px">
-        <div class="chips"><span class="chip">${esc(r.checkpoint)}</span><span class="chip">${fmt(h.views)} views</span>
-          <span class="chip">${fmt(h.impressions)} impressions</span><span class="chip">${fmt(h.ctr)}% CTR</span><span class="chip">${fmt(h.apv_pct)}% viewed</span></div>
+    <section class="hero">
+      <img src="${esc(backend.thumb(r.video_id))}" alt="Thumbnail">
+      <div>
+        <div class="chips">
+          <span class="chip">${esc(r.checkpoint)} checkpoint</span>
+          <span class="chip">${esc((r.published || "").slice(0, 10))}</span>
+          <span class="chip">${fmtNum(h.views)} views</span>
+          <span class="chip">${fmtNum(h.ctr)}% CTR</span>
+          <span class="chip">${fmtNum(h.apv_pct)}% avg viewed</span>
+          <a class="chip" href="https://www.youtube.com/watch?v=${esc(r.video_id)}" target="_blank" rel="noopener">Open on YouTube ↗</a>
+        </div>
         <h1>${esc(r.title)}</h1>
-        <div class="verdict">${(d.verdict || []).map(v => `<p>${esc(v)}</p>`).join("")}</div>
-        ${d.bottleneck ? `<p style="margin:8px 0 0;font-size:14px"><b>Held back at: ${esc(d.bottleneck.stage)}.</b> ${esc(d.bottleneck.why || "")}</p>` : ""}
+        <ul class="verdict">${(d.verdict || []).map(v => `<li>${esc(v)}</li>`).join("")}</ul>
+        ${bottleneck ? `<div class="callout"><b>Held back at: ${esc(bottleneck)}.</b> ${esc(d.bottleneck.why || "")}</div>` : ""}
+        ${d.sample_warning ? `<div class="auditnote">${esc(d.sample_warning)}</div>` : ""}
       </div>
     </section>
-    ${(r.flags || []).length ? `<div class="flags"><b>Data warnings</b><ul>${r.flags.map(f => `<li>${esc(f)}</li>`).join("")}</ul></div>` : ""}
-    <section class="panel"><h2 style="margin-top:0">Who was still watching</h2>${chart(r)}</section>
-    <h2>Findings</h2>
-    <div class="filters">
-      ${["all", "research", "editing", "packaging"].map(t => `<button data-team="${t}" aria-pressed="${team === t}">${t === "all" ? "All teams" : t}</button>`).join("")}
-      <button id="open" aria-pressed="${onlyOpen}">Only undecided</button>
-    </div>
-    ${list.length ? list.map(f => card(f, dec[f.id] || {}, issues[f.id] || [])).join("") : `<div class="empty">Nothing matches.</div>`}`;
-  document.querySelectorAll("[data-team]").forEach(b => b.onclick = () => { team = b.dataset.team; render(); });
-  $("#open").onclick = () => { onlyOpen = !onlyOpen; render(); };
-  document.querySelectorAll(".card").forEach(bind);
+
+    <section>
+      <h2>Funnel</h2>
+      <div class="funnel">${(d.funnel || []).map(f => `
+        <button class="stage ${esc(f.rating)} ${f.stage === bottleneck ? "bottleneck" : ""}" data-stage="${esc(f.stage)}" aria-pressed="${state.openStage === f.stage}">
+          <div class="name">${esc(f.stage)}</div><div class="rating">${esc((f.rating || "").replace("_", " "))}</div>
+        </button>`).join("")}</div>
+      ${state.openStage ? `<div class="panel stage-detail">${esc(((d.funnel || []).find(f => f.stage === state.openStage) || {}).summary)}</div>` : ""}
+    </section>
+
+    <section class="health">
+      <div class="panel">
+        <h2>Audit</h2>
+        ${a ? `<span class="badge ${a.pass ? "pass" : "fail"}">${a.pass ? "Passed" : "Failed"}</span>
+          <span class="muted">&nbsp;${esc(a.checked)} numbers checked · ${(a.items || []).filter(i => i.severity === "critical").length} critical · ${(a.items || []).filter(i => i.severity !== "critical").length} minor</span>`
+          : `<span class="muted">Not run</span>`}
+      </div>
+      <div class="panel">
+        <h2>Data warnings</h2>
+        ${r.flags.length ? `<ul>${r.flags.map(f => `<li>${esc(f.replace(/`/g, ""))}</li>`).join("")}</ul>` : `<span class="muted">None</span>`}
+      </div>
+    </section>
+
+    ${r.curve.length === 100 ? `<section><h2>Who was still watching</h2><div class="panel chart">${chart(r)}</div></section>` : ""}
+
+    <section>
+      <h2>Findings</h2>
+      ${r.status.complete ? `<div class="done">All ${r.status.accepted.length + r.status.rejected.length} findings decided: ${r.status.accepted.length} accepted, ${r.status.rejected.length} rejected. Saved, and ready for the team reports.</div>` : ""}
+      <div class="toolbar">
+        <div class="seg" role="group" aria-label="Filter by team">
+          ${["all", ...TEAMS].map(t => `<button data-team="${t}" aria-pressed="${state.team === t}">${t === "all" ? "All teams" : t[0].toUpperCase() + t.slice(1)}</button>`).join("")}
+        </div>
+        <label class="toggle"><input type="checkbox" id="onlyOpen" ${state.onlyOpen ? "checked" : ""}> Only undecided</label>
+        <label class="toggle"><input type="checkbox" id="onlyLessons" ${state.onlyLessons ? "checked" : ""}> Only lesson candidates</label>
+      </div>
+      <div class="cards">${cards(r)}</div>
+    </section>
+
+    <section>
+      <details class="panel"><summary>Causes considered (${(d.hypotheses || []).length})</summary><div>
+        <table><thead><tr><th>ID</th><th>Cause</th><th>Where</th><th>Verdict</th></tr></thead><tbody>
+        ${(d.hypotheses || []).map(h => `<tr><td class="mono">${esc(h.id)}</td><td>${esc(h.cause)}</td>
+          <td class="muted">${h.outside_video ? "Outside the video" : "In the video"}</td>
+          <td><span class="st ${esc(h.status)}">${esc((h.status || "").replace("_", " "))}</span> <span class="muted">${esc(h.confidence || "")}</span></td></tr>`).join("")}
+        </tbody></table></div></details>
+    </section>
+
+    <footer>${backend.remote ? "Decisions save as you tap and reach the Mac at the next scheduled run (11:00 or 21:00)."
+      : `Decisions save as you click, to <span class="mono">runs/${esc(r.video_id)}/${esc(r.checkpoint)}/decisions.json</span>.`}
+      Only accepted findings go to the team emails and the playbook.</footer>`;
+
+  renderProgress();
+  bind();
 }
 
-function card(f, dec, issues) {
-  return `<article class="panel card ${esc(dec.decision || "")}" data-id="${esc(f.id)}">
-    <div class="head"><span class="id">${esc(f.id)}</span>
-      ${(f.teams || []).map(t => `<span class="team ${esc(t)}">${esc(t)}</span>`).join("")}
-      ${f.kind ? `<span class="tag">${esc(f.kind)}</span>` : ""}${f.craft_tip ? `<span class="tag">craft tip</span>` : ""}
-      <span class="tag">${esc(f.confidence)} confidence</span>${f.lesson_candidate ? `<span class="tag">★ lesson candidate</span>` : ""}</div>
-    <p class="statement">${esc(f.statement)}</p>
-    ${f.do_next ? `<div class="next"><b>Do next:</b> ${esc(f.do_next)}</div>` : ""}
-    <details><summary>Numbers and sources (${(f.numbers || []).length})</summary><ul>${(f.numbers || []).map(n => `<li>${esc(n)}</li>`).join("")}</ul></details>
-    ${issues.map(i => `<div class="audit"><b>Auditor (${esc(i.severity)}):</b> ${esc(i.fix || i.number)}</div>`).join("")}
-    <div class="btns"><button class="btn acc" data-act="accept" aria-pressed="${dec.decision === "accept"}">✓ Accept</button>
-      <button class="btn rej" data-act="reject" aria-pressed="${dec.decision === "reject"}">✕ Reject</button></div>
-    <textarea placeholder="Note (optional): why, or what to change">${esc(dec.note || "")}</textarea>
-    <div class="saved"></div></article>`;
+const PB_TEAMS = { packaging: "Packaging (title + thumbnail)", research: "Research & scripting", editing: "Editing", channel: "Channel-wide" };
+const PB_ORDER = ["rule", "pattern", "emerging", "observed", "retired"];
+const PB_NOTE = { rule: "Approved by you: a default for every brief", pattern: "3+ videos agree: ready for your approval",
+  emerging: "2 videos agree", observed: "1 video so far", retired: "Contradicted or retired" };
+
+async function showPlaybook() {
+  state.view = "playbook"; location.hash = "playbook"; $("#pbBtn").setAttribute("aria-pressed", "true");
+  $("#progress").innerHTML = "";
+  state.pb = await (await fetch("/api/playbook")).json();
+  renderPlaybook();
 }
 
-async function save(id, decision, note, el) {
-  el.querySelector(".saved").textContent = "Saving…";
-  try {
-    const r = await api({ action: "save_decision", review_key: K, key: cur.key, id, decision, note });
-    cur.remote = r.decisions;
-    if (decision !== null) render(); else { updateProg(); el.querySelector(".saved").textContent = "Saved"; }
-  } catch (e) {
-    el.querySelector(".saved").textContent = "Not saved: " + e.message + ". Check your connection and tap again.";
+function renderPlaybook() {
+  const pb = state.pb, ls = pb.lessons || [];
+  const counts = PB_ORDER.map(s => `${ls.filter(l => l.status === s).length} ${s}`).join(" · ");
+  let html = `<section class="panel" style="padding:16px 18px"><h2 style="margin:0 0 4px">${esc(pb.channel)} playbook</h2>
+    <p class="muted" style="margin:0">${(pb.processed || []).length} video checkpoints so far · ${counts}.
+    A lesson becomes <b>emerging</b> when 2 videos agree and a <b>pattern</b> at 3. Only you can make it a <b>rule</b>.
+    Rules and patterns become defaults in the next briefs.</p></section>`;
+  if (!ls.length) html += `<div class="empty panel">No lessons yet. They appear after a reviewed 7d or 28d run.</div>`;
+  for (const [team, name] of Object.entries(PB_TEAMS)) {
+    const items = ls.filter(l => l.team === team).sort((a, b) => PB_ORDER.indexOf(a.status) - PB_ORDER.indexOf(b.status));
+    if (!items.length) continue;
+    html += `<h3 class="pb-team">${esc(name)}</h3>`;
+    for (const l of items) {
+      const ap = (pb.approvals || {})[l.id] || {};
+      html += `<article class="panel pb ${esc(l.status)}" data-id="${esc(l.id)}">
+        <div class="card-head"><span class="mono muted">${esc(l.id)}</span>
+          <span class="st ${esc(l.status)}" title="${esc(PB_NOTE[l.status])}">${esc(l.status)}</span>
+          ${l.kind === "hypothesis" ? `<span class="kind">hypothesis · not yet tested</span>` : ""}
+          <span class="muted" style="font-size:12.5px">${l.supporting_videos} for · ${l.contradicting_videos} against · applies to ${esc(l.applies_to)}</span></div>
+        <p class="statement">${esc(l.statement)}</p>
+        ${l.why ? `<p class="muted" style="margin:0;font-size:13.5px">${esc(l.why)}</p>` : ""}
+        <details class="evidence"><summary>Evidence (${(l.evidence || []).length})</summary><ul>${(l.evidence || []).map(e =>
+          `<li><b>${esc(e.direction)}</b> · <span class="mono">${esc(e.video)}</span> ${esc(e.checkpoint)} ${esc(e.finding)}: ${esc(e.note)}</li>`).join("")}</ul></details>
+        ${l.retired_reason ? `<div class="auditnote"><b>Retired:</b> ${esc(l.retired_reason)}</div>` : ""}
+        <div class="decide"><div class="btns">
+          <button class="btn acc" data-pb="rule" aria-pressed="${ap.decision === "rule"}" ${l.supporting_videos < 3 && ap.decision !== "rule" ? `title="Usually wait for 3 videos (a pattern)"` : ""}>Make it a rule</button>
+          <button class="btn rej" data-pb="retire" aria-pressed="${ap.decision === "retire"}">Retire</button></div>
+          <div><textarea placeholder="Note (optional): why" aria-label="Note for ${esc(l.id)}">${esc(ap.note || "")}</textarea></div></div>
+      </article>`;
+    }
   }
-}
-function updateProg() {
-  const c = counts(cur);
-  $("#prog").innerHTML = `<b>${c.decided}</b> of ${c.total} decided`;
-  const opt = $("#run").selectedOptions[0];
-  if (opt) opt.textContent = label(cur);
+  $("#app").innerHTML = html;
+  document.querySelectorAll(".pb").forEach(card => card.querySelectorAll("[data-pb]").forEach(btn => btn.onclick = async () => {
+    const cur = ((state.pb.approvals || {})[card.dataset.id] || {}).decision;
+    const decision = cur === btn.dataset.pb ? "" : btn.dataset.pb;
+    const res = await fetch("/api/playbook/approve", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: card.dataset.id, decision, note: $("textarea", card).value }) });
+    if (res.ok) { state.pb = await res.json(); renderPlaybook(); }
+  }));
 }
 
-function bind(el) {
-  const id = el.dataset.id, ta = el.querySelector("textarea");
-  el.querySelectorAll("[data-act]").forEach(b => b.onclick = () => {
-    const now = (decisions(cur)[id] || {}).decision;
-    save(id, now === b.dataset.act ? "" : b.dataset.act, ta.value, el);
-  });
-  let t;
-  ta.oninput = () => { clearTimeout(t); t = setTimeout(() => save(id, null, ta.value, el), 900); };
+function cards(r) {
+  const d = r.diagnosis || {};
+  const issues = {};
+  for (const i of (r.audit || {}).items || []) (issues[i.finding] ||= []).push(i);
+  const list = (d.findings || []).filter(f =>
+    (state.team === "all" || (f.teams || []).includes(state.team)) &&
+    (!state.onlyOpen || !(r.decisions[f.id] || {}).decision) &&
+    (!state.onlyLessons || f.lesson_candidate));
+  if (!list.length) return `<div class="empty panel">Nothing matches these filters.</div>`;
+  return list.map(f => {
+    const dec = r.decisions[f.id] || {};
+    return `
+    <article class="panel card ${esc(dec.decision || "")}" data-id="${esc(f.id)}">
+      <div class="card-head">
+        <span class="mono muted">${esc(f.id)}</span>
+        ${(f.teams || []).map(t => `<span class="team ${esc(t)}">${esc(t)}</span>`).join("")}
+        ${f.kind ? `<span class="kind">${esc(f.kind)}</span>` : ""}
+        ${f.craft_tip ? `<span class="kind" title="General quality tip, not backed by this video's numbers">craft tip</span>` : ""}
+        <span class="conf ${esc(f.confidence)}">${esc(f.confidence)} confidence</span>
+        ${f.lesson_candidate ? `<span class="lesson">★ Lesson candidate</span>` : ""}
+      </div>
+      <p class="statement">${esc(f.statement)}</p>
+      ${f.do_next ? `<div class="next"><b>Do next:</b> ${esc(f.do_next)}</div>` : ""}
+      <details class="evidence"><summary>Numbers and sources (${(f.numbers || []).length})</summary>
+        <ul>${(f.numbers || []).map(n => `<li>${esc(n)}</li>`).join("")}</ul>
+        <div class="muted" style="font-size:12.5px;margin-top:6px">Analyst evidence: <span class="mono">${esc((f.evidence || []).join(", "))}</span></div>
+      </details>
+      ${(issues[f.id] || []).map(i => `<div class="auditnote"><b>Auditor (${esc(i.severity)}):</b> ${esc(i.fix || i.number)}</div>`).join("")}
+      <div class="decide">
+        <div class="btns">
+          <button class="btn acc" data-act="accept" aria-pressed="${dec.decision === "accept"}">✓ Accept</button>
+          <button class="btn rej" data-act="reject" aria-pressed="${dec.decision === "reject"}">✕ Reject</button>
+        </div>
+        <div><textarea placeholder="Note (optional): why, or what to change" aria-label="Note for ${esc(f.id)}">${esc(dec.note || "")}</textarea>
+        <div class="saved"></div></div>
+      </div>
+    </article>`;
+  }).join("");
 }
+
+function chart(r) {
+  // On a phone the chart gets its own proportions and bigger type, so it stays readable when scaled down.
+  const small = window.innerWidth < 640, fs = small ? 13 : 11;
+  const W = small ? 420 : 1000, H = small ? 280 : 260, L = small ? 36 : 34, R = 8, T = 10, B = 40, n = 100;
+  CHART = { W, L, R };
+  const x = i => L + (W - L - R) * i / (n - 1), y = v => T + (H - T - B) * (1 - v / 100);
+  const path = arr => arr.map((v, i) => v == null ? "" : `${i && arr[i - 1] != null ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
+  const step = (r.duration || 0) / 100;
+  const grid = [0, 25, 50, 75, 100].map(v => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" font-size="${fs}" fill="var(--muted)">${v}%</text>`).join("");
+  const every = Math.max(1, Math.ceil((r.beats || []).length / (small ? 10 : 30)));
+  const beats = (r.beats || []).map((b, k) => { const i = Math.min(99, b.start / step);
+    return `<line x1="${x(i)}" x2="${x(i)}" y1="${T}" y2="${H - B + 6}" stroke="var(--line)"/>` +
+      (k % every === 0 ? `<text x="${x(i) + 2}" y="${H - B + 19}" font-size="${fs}" fill="var(--muted)">${k + 1}</text>` : ""); }).join("");
+  const ticks = (small ? [0, 50, 99] : [0, 25, 50, 75, 99]).map(i => `<text x="${x(i)}" y="${H - 4}" font-size="${fs}" fill="var(--muted)" text-anchor="${i ? (i === 99 ? "end" : "middle") : "start"}">${mmss(i * step)}</text>`).join("");
+  return `<div class="legend"><span><i></i>This video</span><span><i class="med"></i>Our typical video at the same point</span>${(r.beats || []).length ? "<span>Numbered lines are the sections listed below. Tap or hover the chart.</span>" : ""}</div>
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Retention curve against the channel median">
+      ${grid}${beats}${ticks}
+      <path d="${path(r.median)}" fill="none" stroke="var(--median)" stroke-width="2" stroke-dasharray="5 4"/>
+      <path d="${path(r.curve)}" fill="none" stroke="var(--curve)" stroke-width="2.2"/>
+      <line id="hoverline" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="var(--muted)" opacity="0"/>
+      <rect id="hover" x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" fill="transparent"/>
+    </svg>
+    <div id="tapinfo" class="tapinfo muted"></div>
+    ${(r.beats || []).length ? `<details class="sections"><summary>Sections of the video (${r.beats.length})</summary><ol>${r.beats.map(b =>
+      `<li><span class="mono">${mmss(b.start)}</span> <b>${esc((b.type || "").replace(/_/g, " "))}</b> ${esc(b.summary || "")}</li>`).join("")}</ol></details>` : ""}`;
+}
+
+let CHART = { W: 1000, L: 34, R: 8 };
+
+function bindChart() {
+  const r = state.run, rect = $("#hover"), tip = $("#tip"), line = $("#hoverline");
+  if (!rect) return;
+  const svg = rect.ownerSVGElement, step = (r.duration || 0) / 100;
+  const show = e => {
+    const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const span = CHART.W - CHART.L - CHART.R;
+    const i = Math.max(0, Math.min(99, Math.round((p.x - CHART.L) / span * 99)));
+    const t = i * step, b = r.beats.find(b => b.start <= t && t < b.end) || {};
+    const med = r.median[i];
+    const lx = CHART.L + span * i / 99;
+    line.setAttribute("x1", lx); line.setAttribute("x2", lx); line.setAttribute("opacity", 1);
+    const k = (r.beats || []).indexOf(b);
+    const html = `<b>${mmss(t)}</b> · ${fmtNum(r.curve[i])}% still watching${med != null ? ` (typical ${fmtNum(med)}%)` : ""}` +
+      (k >= 0 ? `<br>Section ${k + 1} · ${esc((b.type || "").replace(/_/g, " "))}: ${esc(b.summary || "")}` : "");
+    if (e.pointerType === "mouse") {
+      tip.innerHTML = html; tip.style.opacity = 1;
+      const bx = Math.min(window.innerWidth - 300, e.clientX + 14);
+      tip.style.left = bx + window.scrollX + "px"; tip.style.top = e.clientY + window.scrollY + 14 + "px";
+    } else {
+      $("#tapinfo").innerHTML = html;  // on a phone the details show under the chart, where a finger doesn't cover them
+    }
+  };
+  rect.onpointermove = show;
+  rect.onpointerdown = show;
+  rect.onpointerleave = e => { if (e.pointerType === "mouse") { tip.style.opacity = 0; line.setAttribute("opacity", 0); } };
+}
+
+function renderProgress() {
+  const s = state.run.status, total = s.accepted.length + s.rejected.length + s.undecided.length;
+  const pct = k => total ? (100 * k / total) + "%" : "0";
+  $("#progress").innerHTML = `<span><b>${total - s.undecided.length}</b> of ${total} decided</span>
+    <span class="pbar"><i style="width:${pct(s.accepted.length)};background:var(--accept)"></i><i style="width:${pct(s.rejected.length)};background:var(--reject)"></i></span>`;
+}
+
+async function decide(id, body, savedEl) {
+  const r = state.run;
+  let data;
+  try { data = await backend.decide(r, id, body); }
+  catch (e) { if (savedEl) savedEl.textContent = `Couldn't save: ${e.message} Tap again to retry.`; return false; }
+  r.decisions = data.decisions; r.status = data.status;
+  const opt = $(`#run option[value="${r.video_id}|${r.checkpoint}"]`);
+  if (opt) opt.textContent = `${r.checkpoint} · ${r.title}${r.status.undecided.length ? ` · ${r.status.undecided.length} to decide` : " · done"}`;
+  return true;
+}
+
+function paint(card, decision) {
+  card.classList.remove("accept", "reject");
+  if (decision) card.classList.add(decision);
+  card.querySelectorAll("[data-act]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.act === decision)));
+}
+
+function bind() {
+  document.querySelectorAll(".stage").forEach(b => b.onclick = () => { state.openStage = state.openStage === b.dataset.stage ? null : b.dataset.stage; render(); });
+  document.querySelectorAll(".seg button").forEach(b => b.onclick = () => { state.team = b.dataset.team; render(); });
+  $("#onlyOpen").onchange = e => { state.onlyOpen = e.target.checked; render(); };
+  $("#onlyLessons").onchange = e => { state.onlyLessons = e.target.checked; render(); };
+  document.querySelectorAll(".card").forEach(card => {
+    const id = card.dataset.id, saved = $(".saved", card), ta = $("textarea", card);
+    card.querySelectorAll("[data-act]").forEach(btn => btn.onclick = async () => {
+      const before = (state.run.decisions[id] || {}).decision || "";
+      const next = before === btn.dataset.act ? "" : btn.dataset.act;   // tap again to undo
+      paint(card, next);                     // show it straight away
+      saved.textContent = "Saving…";
+      if (await decide(id, { decision: next, note: ta.value }, saved)) {
+        saved.textContent = next ? `Saved: ${next === "accept" ? "accepted" : "rejected"}` : "Saved: undecided";
+        renderProgress();
+        if (state.run.status.complete) render();
+      } else {
+        paint(card, before);
+      }
+    });
+    let timer;
+    ta.oninput = () => { saved.textContent = "Saving…"; clearTimeout(timer);
+      timer = setTimeout(async () => { if (await decide(id, { note: ta.value })) { saved.textContent = "Saved"; renderProgress(); } }, 600); };
+  });
+  bindChart();
+}
+
 init();
 </script>
 </body>
